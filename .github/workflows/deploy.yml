@@ -1,0 +1,46 @@
+name: Build and Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main  # Runs on every push to the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout the Repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Login to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # 3️⃣ Build the Docker Image
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/flask-app:latest .
+
+      # 4️⃣ Push the Image to Docker Hub
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/flask-app:latest
+
+      # 5️⃣ Deploy to AWS EC2
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22  # Ensure this is set
+          script: |
+            whoami  # Test if the connection works
+            docker stop flask-app || true
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/flask-app:latest
+            docker run -d --name flask-app -p 5000:5000 ${{ secrets.DOCKER_HUB_USERNAME }}/flask-app:latest
