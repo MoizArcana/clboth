@@ -87,7 +87,7 @@ def corporate_login():
             "X-Channel": channel,
             "Content-Type": "application/json"
         }
-        response = requests.post(CORPORATE_LOGIN_URL, json={"LoginPayload": login_payload}, headers=headers)
+        response = requests.post(CORPORATE_LOGIN_URL, json={"LoginPayloadd": login_payload}, headers=headers)
 
         # Map exact response and status code
         if response.status_code != 200:
